@@ -137,7 +137,14 @@ def main() -> None:
         format="ICO",
         sizes=[(s, s) for s in ico_sizes],
     )
-    print(f"Wrote {BUILD / 'icon.ico'} and {BUILD / 'icon.png'}")
+
+    # Notification-area icon: a little transparent padding keeps the glyph from
+    # touching the edges at Windows' 16px tray size.
+    tray_icon = Image.new("RGBA", (32, 32), (0, 0, 0, 0))
+    tray_icon.alpha_composite(icon.resize((28, 28), Image.Resampling.LANCZOS), (2, 2))
+    tray_icon.save(BUILD / "tray.png")
+
+    print(f"Wrote {BUILD / 'icon.ico'}, {BUILD / 'icon.png'} and {BUILD / 'tray.png'}")
 
 
 if __name__ == "__main__":

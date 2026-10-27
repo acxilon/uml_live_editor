@@ -48,6 +48,10 @@
     ],
     "extraResources": [
       {
+        "from": "build/tray.png",
+        "to": "tray.png"
+      },
+      {
         "from": "LICENSE",
         "to": "LICENSE.txt"
       },

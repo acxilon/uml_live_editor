@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ClipboardItem, Menu, clipboard, dialog, ipcMain, nativeImage, nativeTheme, protocol, screen, session, shell } from 'electron';
+import { app, BrowserWindow, ClipboardItem, Menu, Tray, clipboard, dialog, ipcMain, nativeImage, nativeTheme, protocol, screen, session, shell } from 'electron';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -26,11 +26,16 @@ protocol.registerSchemesAsPrivileged([
   },
 ]);
 
-if (!app.requestSingleInstanceLock()) {
+const hasSingleInstanceLock = app.requestSingleInstanceLock();
+if (!hasSingleInstanceLock) {
   app.quit();
 }
 
 let mainWindow = null;
+let tray = null;
+let trayHintShown = false;
+let isQuitting = false;
+let closePromptOpen = false;
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -143,6 +148,108 @@ function applyThemeToWindow(win, theme) {
   }
 }
 
+function trayIconPath() {
+  return app.isPackaged
+    ? path.join(process.resourcesPath, 'tray.png')
+    : path.join(projectRoot, 'build', 'tray.png');
+}
+
+function showMainWindow() {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    void createWindow();
+    return;
+  }
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.show();
+  mainWindow.focus();
+}
+
+function quitApplication() {
+  isQuitting = true;
+  app.quit();
+}
+
+function createTray() {
+  if (tray) return tray;
+
+  let image = nativeImage.createFromPath(trayIconPath());
+  if (image.isEmpty() && !app.isPackaged) {
+    image = nativeImage.createFromPath(path.join(projectRoot, 'build', 'icon.png'));
+  }
+  if (image.isEmpty()) {
+    console.warn('[tray] Icon not found:', trayIconPath());
+    return null;
+  }
+
+  try {
+    tray = new Tray(image);
+    tray.setToolTip('UML Live — PlantUML / Mermaid');
+    tray.setContextMenu(
+      Menu.buildFromTemplate([
+        { label: '显示 UML Live', click: showMainWindow },
+        { type: 'separator' },
+        { label: '退出 UML Live', click: quitApplication },
+      ]),
+    );
+    tray.on('click', showMainWindow);
+    tray.on('double-click', showMainWindow);
+    tray.on('balloon-click', showMainWindow);
+    return tray;
+  } catch (error) {
+    console.error('[tray] Failed to create tray:', error);
+    tray = null;
+    return null;
+  }
+}
+
+function notifyMinimizedToTray() {
+  if (trayHintShown || !tray || process.platform !== 'win32') return;
+  trayHintShown = true;
+  try {
+    tray.displayBalloon({
+      title: 'UML Live 仍在运行',
+      content: '窗口已最小化到系统托盘。单击托盘图标重新打开，右键菜单可以退出。',
+      iconType: 'info',
+      noSound: true,
+    });
+  } catch {
+    // Balloon notifications are optional; some Windows configurations suppress them.
+  }
+}
+
+async function promptCloseAction(win) {
+  closePromptOpen = true;
+  try {
+    const { response } = await dialog.showMessageBox(win, {
+      type: 'question',
+      title: '关闭 UML Live',
+      message: '要最小化到系统托盘，还是退出 UML Live？',
+      detail: '最小化到托盘后，UML Live 会继续在后台运行。你可以单击托盘图标重新打开，或通过托盘菜单退出。',
+      buttons: ['最小化到托盘', '退出 UML Live'],
+      defaultId: 0,
+      cancelId: 0,
+      noLink: true,
+    });
+
+    if (isQuitting || win.isDestroyed()) return;
+
+    if (response === 0) {
+      if (!createTray()) {
+        dialog.showErrorBox('UML Live', '无法创建系统托盘图标，窗口将保持打开。');
+        return;
+      }
+      win.hide();
+      notifyMinimizedToTray();
+    } else {
+      quitApplication();
+    }
+  } catch (error) {
+    console.error('[window] Close prompt failed:', error);
+  } finally {
+    closePromptOpen = false;
+  }
+}
+
 async function createWindow() {
   const saved = await readWindowState();
   const opts = {
@@ -182,8 +289,15 @@ async function createWindow() {
     if (saved?.maximized) win.maximize();
   });
 
-  win.on('close', () => {
+  win.on('close', (event) => {
     saveWindowState(win);
+    if (isQuitting) return;
+    event.preventDefault();
+    if (!closePromptOpen) void promptCloseAction(win);
+  });
+  win.on('session-end', () => {
+    // Windows shutdown/logoff must not be blocked by the close confirmation.
+    isQuitting = true;
   });
   win.on('closed', () => {
     if (mainWindow === win) mainWindow = null;
@@ -356,31 +470,41 @@ function registerIpc() {
 }
 
 app.on('second-instance', () => {
-  if (!mainWindow) return;
-  if (mainWindow.isMinimized()) mainWindow.restore();
-  mainWindow.show();
-  mainWindow.focus();
+  // A second launch should reveal the window that is currently hidden in the tray.
+  showMainWindow();
 });
 
-app.whenReady()
-  .then(async () => {
-    app.setAppUserModelId('com.umllive.editor');
-    Menu.setApplicationMenu(null);
-    if (!isDev) await registerAppProtocol();
-    session.defaultSession.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
-    session.defaultSession.setPermissionCheckHandler(() => false);
-    registerIpc();
-    await createWindow();
+if (hasSingleInstanceLock) {
+  app.whenReady()
+    .then(async () => {
+      app.setAppUserModelId('com.umllive.editor');
+      Menu.setApplicationMenu(null);
+      if (!isDev) await registerAppProtocol();
+      session.defaultSession.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
+      session.defaultSession.setPermissionCheckHandler(() => false);
+      registerIpc();
+      await createWindow();
+      createTray();
 
-    app.on('activate', () => {
-      if (BrowserWindow.getAllWindows().length === 0) void createWindow();
+      app.on('activate', () => {
+        if (BrowserWindow.getAllWindows().length === 0) void createWindow();
+        else showMainWindow();
+      });
+    })
+    .catch((error) => {
+      console.error('[app] Startup failed:', error);
+      dialog.showErrorBox('UML Live', `应用启动失败。\n\n${error?.message ?? error}`);
+      app.quit();
     });
-  })
-  .catch((error) => {
-    console.error('[app] Startup failed:', error);
-    dialog.showErrorBox('UML Live', `应用启动失败。\n\n${error?.message ?? error}`);
-    app.quit();
-  });
+}
+
+app.on('before-quit', () => {
+  isQuitting = true;
+  if (tray) {
+    tray.destroy();
+    tray = null;
+  }
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
