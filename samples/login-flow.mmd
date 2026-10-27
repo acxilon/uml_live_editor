@@ -1,0 +1,18 @@
+sequenceDiagram
+  autonumber
+  actor User
+  participant Web as Web App
+  participant API as API Gateway
+  participant Auth as Auth Service
+  participant DB as PostgreSQL
+
+  User->>Web: Enter credentials
+  Web->>API: POST /auth/login
+  API->>Auth: verify(credentials)
+  Auth->>DB: SELECT user
+  DB-->>Auth: user + password hash
+  Auth-->>API: signed JWT
+  API-->>Web: 200 { accessToken }
+  Web-->>User: Redirect to dashboard
+
+  Note over Auth,DB: Refresh tokens rotate every 30 days

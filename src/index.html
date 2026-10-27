@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark light" />
+  <title>UML Live</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+</head>
+<body>
+  <!-- Icon sprite: Lucide-style 24px stroke icons. -->
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon-sprite" aria-hidden="true">
+    <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="m7 4 13 8-13 8V4Z"/></symbol>
+    <symbol id="i-layout" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></symbol>
+    <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h.01M18 14h.01M9 14h6"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-4.35-4.35a1.5 1.5 0 0 0-2.12 0L5 21"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-fit" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></symbol>
+    <symbol id="i-collapse" viewBox="0 0 24 24"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></symbol>
+    <symbol id="i-external" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></symbol>
+    <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3ZM19 15l.95 2.55L22.5 18.5l-2.55.95L19 22l-.95-2.55L15.5 18.5l2.55-.95L19 15Z"/></symbol>
+    <symbol id="i-zoom-in" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35M8 11h6M11 8v6"/></symbol>
+    <symbol id="i-maximize" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></symbol>
+    <symbol id="i-rotate" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></symbol>
+    <symbol id="i-loader" viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></symbol>
+  </svg>
+
+  <div class="app">
+    <header class="titlebar">
+      <div class="brand">
+        <svg class="brand-logo" viewBox="0 0 32 32" aria-hidden="true">
+          <defs>
+            <linearGradient id="brandGradient" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#818cf8" />
+              <stop offset="0.55" stop-color="#8b5cf6" />
+              <stop offset="1" stop-color="#22d3ee" />
+            </linearGradient>
+          </defs>
+          <rect width="32" height="32" rx="9" fill="url(#brandGradient)" />
+          <path d="M10.4 11.4 21.4 9.8M10.4 11.4l5.6 10.1M21.4 9.8l-5.4 11.7" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".92" />
+          <circle cx="10.3" cy="11.3" r="3.1" fill="none" stroke="#fff" stroke-width="1.9" />
+          <circle cx="21.5" cy="9.7" r="2.3" fill="#fff" />
+          <rect x="13.1" y="18.6" width="5.8" height="5.8" rx="1.4" fill="#fff" />
+        </svg>
+        <div class="brand-text">
+          <span class="brand-name">UML Live</span>
+          <span class="brand-tag">PlantUML · Mermaid</span>
+        </div>
+      </div>
+
+      <div class="titlebar-doc">
+        <span class="doc-status-dot" id="docStatusDot"></span>
+        <span class="doc-name" id="docName">未命名图表</span>
+        <span class="doc-lang" id="docLang">PlantUML</span>
+      </div>
+
+      <div class="titlebar-actions">
+        <button class="tb-btn" id="fileMenuBtn" type="button" title="文件菜单" aria-haspopup="menu">
+          <svg class="icon"><use href="#i-folder" /></svg>
+        </button>
+        <button class="tb-btn" id="shortcutsBtn" type="button" title="快捷键 (Ctrl+/)">
+          <svg class="icon"><use href="#i-keyboard" /></svg>
+        </button>
+        <span class="tb-separator"></span>
+        <button class="tb-btn" id="themeBtn" type="button" title="切换浅色 / 深色主题">
+          <svg class="icon theme-icon-moon"><use href="#i-moon" /></svg>
+          <svg class="icon theme-icon-sun"><use href="#i-sun" /></svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="workspace" id="workspace">
+      <section class="pane editor-pane" id="editorPane">
+        <header class="pane-toolbar">
+          <div class="segmented" id="languageSwitch" role="tablist" aria-label="图表语言">
+            <button class="seg-btn is-active" type="button" role="tab" aria-selected="true" data-language="plantuml">
+              <span class="lang-dot plantuml"></span>PlantUML
+            </button>
+            <button class="seg-btn" type="button" role="tab" aria-selected="false" data-language="mermaid">
+              <span class="lang-dot mermaid"></span>Mermaid
+            </button>
+          </div>
+
+          <div class="toolbar-spacer"></div>
+
+          <button class="live-toggle is-on" id="liveToggle" type="button" role="switch" aria-checked="true" title="实时渲染">
+            <span class="live-pulse"></span>
+            <span class="live-label">实时</span>
+            <span class="switch-track"><span class="switch-thumb"></span></span>
+          </button>
+
+          <button class="btn btn-soft templates-btn" id="templatesBtn" type="button" title="从模板开始" aria-label="从模板开始" aria-haspopup="menu">
+            <svg class="icon"><use href="#i-grid" /></svg>
+            <span class="btn-label">模板</span>
+            <svg class="icon icon-chevron"><use href="#i-chevron-down" /></svg>
+          </button>
+
+          <button class="btn btn-icon render-btn" id="renderBtn" type="button" title="立即渲染 (Ctrl+Enter)" aria-label="立即渲染">
+            <svg class="icon render-icon"><use href="#i-play" /></svg>
+          </button>
+        </header>
+
+        <div class="editor-host" id="editor"></div>
+
+        <footer class="pane-footer">
+          <span class="mono" id="cursorInfo">行 1, 列 1</span>
+          <span class="footer-sep"></span>
+          <span class="mono" id="charInfo">0 字符</span>
+          <span class="footer-spacer"></span>
+          <span class="autosave" id="saveState">
+            <svg class="icon"><use href="#i-check" /></svg>
+            已自动保存
+          </span>
+          <span class="footer-badge" id="editorLangBadge">PlantUML</span>
+        </footer>
+      </section>
+
+      <div class="splitter" id="splitter" role="separator" aria-orientation="vertical" aria-label="调整编辑区宽度" tabindex="0">
+        <span class="splitter-grip"></span>
+      </div>
+
+      <section class="pane preview-pane" id="previewPane">
+        <header class="pane-toolbar preview-toolbar">
+          <div class="preview-status" id="previewStatus" aria-live="polite">
+            <span class="status-dot"></span>
+            <span class="status-text" id="renderStatus">实时预览</span>
+            <span class="status-meta mono" id="renderTime"></span>
+          </div>
+
+          <div class="toolbar-spacer"></div>
+
+          <div class="zoom-group" role="group" aria-label="缩放">
+            <button class="zoom-btn" id="zoomOutBtn" type="button" title="缩小 (Ctrl+-)" aria-label="缩小">
+              <svg class="icon"><use href="#i-minus" /></svg>
+            </button>
+            <button class="zoom-value mono" id="zoomValueBtn" type="button" title="恢复 100% 并居中">100%</button>
+            <button class="zoom-btn" id="zoomInBtn" type="button" title="放大 (Ctrl+=)" aria-label="放大">
+              <svg class="icon"><use href="#i-plus" /></svg>
+            </button>
+            <button class="zoom-btn" id="fitBtn" type="button" title="恢复 100% 并居中 (Ctrl+0)" aria-label="恢复 100% 并居中">
+              <svg class="icon"><use href="#i-fit" /></svg>
+            </button>
+          </div>
+
+          <span class="toolbar-divider"></span>
+
+          <button class="btn btn-icon fullscreen-btn" id="previewOnlyBtn" type="button" title="全屏预览 (F11)" aria-label="全屏预览" aria-pressed="false">
+            <svg class="icon icon-expand"><use href="#i-expand" /></svg>
+            <svg class="icon icon-collapse"><use href="#i-collapse" /></svg>
+          </button>
+
+          <button class="btn btn-icon" id="copyImageBtn" type="button" title="复制图片到剪贴板 (Ctrl+Shift+C)" aria-label="复制图片">
+            <svg class="icon"><use href="#i-copy" /></svg>
+          </button>
+
+          <div class="split-button">
+            <button class="btn btn-soft" id="exportPngBtn" type="button" title="导出 PNG (Ctrl+Shift+P)">
+              <svg class="icon"><use href="#i-download" /></svg>
+              <span class="btn-label">PNG</span>
+            </button>
+            <button class="btn btn-soft split-chevron" id="pngOptionsBtn" type="button" title="PNG 导出选项" aria-haspopup="menu" aria-label="PNG 导出选项">
+              <svg class="icon"><use href="#i-chevron-down" /></svg>
+            </button>
+          </div>
+
+          <button class="btn btn-accent" id="exportSvgBtn" type="button" title="导出 SVG (Ctrl+Shift+E)">
+            <svg class="icon"><use href="#i-download" /></svg>
+            <span class="btn-label">SVG</span>
+          </button>
+        </header>
+
+        <div class="preview-viewport" id="previewViewport">
+          <div class="preview-grid" aria-hidden="true"></div>
+          <div class="diagram-layer" id="diagramLayer">
+            <div class="diagram-svg" id="diagramSvg"></div>
+          </div>
+
+          <div class="preview-placeholder" id="previewPlaceholder" hidden>
+            <div class="placeholder-icon">
+              <svg class="icon"><use href="#i-sparkles" /></svg>
+            </div>
+            <h2>画一张图，实时看见</h2>
+            <p>在左侧输入 PlantUML 或 Mermaid 代码，<br />这里会即时呈现渲染结果。</p>
+            <button class="btn btn-soft" id="placeholderTemplatesBtn" type="button">
+              <svg class="icon"><use href="#i-grid" /></svg>
+              浏览模板
+            </button>
+          </div>
+
+          <div class="preview-loading" id="previewLoading" hidden>
+            <span class="spinner"></span>
+            <span id="previewLoadingText">正在准备渲染引擎…</span>
+          </div>
+
+          <div class="preview-progress" id="previewProgress" hidden></div>
+
+          <div class="error-card" id="errorCard" role="alert" hidden>
+            <div class="error-mark">
+              <svg class="icon"><use href="#i-alert" /></svg>
+            </div>
+            <div class="error-content">
+              <div class="error-heading">
+                <span id="errorTitle">语法错误</span>
+                <span class="error-line mono" id="errorLine" hidden></span>
+              </div>
+              <pre class="error-message" id="errorMessage"></pre>
+            </div>
+            <div class="error-actions">
+              <button class="icon-btn" id="errorCopyBtn" type="button" title="复制错误信息" aria-label="复制错误信息">
+                <svg class="icon"><use href="#i-copy" /></svg>
+              </button>
+              <button class="icon-btn" id="errorCloseBtn" type="button" title="关闭" aria-label="关闭">
+                <svg class="icon"><use href="#i-x" /></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="drop-overlay" id="dropOverlay" hidden>
+            <div class="drop-card">
+              <svg class="icon"><use href="#i-file" /></svg>
+              <strong>松开以打开图表源码</strong>
+              <span>支持 .puml / .plantuml / .mmd / .mermaid / .txt</span>
+            </div>
+          </div>
+        </div>
+
+        <footer class="pane-footer">
+          <span class="mono" id="diagramSize">— × —</span>
+          <span class="footer-sep"></span>
+          <span id="engineInfo">PlantUML · 本地 JS 引擎</span>
+          <span class="footer-spacer"></span>
+          <span class="hint" id="zoomHint">滚轮缩放 · 拖拽平移 · 双击适应窗口</span>
+          <button class="footer-link" id="footerShortcutsBtn" type="button">
+            <kbd>Ctrl</kbd><kbd>/</kbd>
+          </button>
+        </footer>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast-stack" id="toastStack" role="status" aria-live="polite"></div>
+
+  <div class="modal-backdrop" id="modalBackdrop" hidden>
+    <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <header class="modal-header">
+        <h2 id="modalTitle">快捷键</h2>
+        <button class="icon-btn" id="modalCloseBtn" type="button" aria-label="关闭">
+          <svg class="icon"><use href="#i-x" /></svg>
+        </button>
+      </header>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- Graphviz layout engine (Viz.js) is a classic UMD script and must load
+       before the PlantUML TeaVM bundle uses it. -->
+  <script src="./viz-global.js"></script>
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>

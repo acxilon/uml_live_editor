@@ -1,0 +1,23 @@
+@startuml
+title Order checkout flow
+autonumber
+actor Customer
+participant "Web App" as Web
+participant "API Gateway" as API
+participant "Order Service" as Orders
+database "PostgreSQL" as DB
+
+Customer -> Web : Submit order
+Web -> API : POST /orders
+API -> Orders : createOrder(payload)
+Orders -> DB : INSERT order
+DB --> Orders : order_id
+Orders --> API : 201 Created
+API --> Web : { id, status: "paid" }
+Web --> Customer : Show confirmation
+
+note right of Orders
+  Idempotent by request id
+  Payment timeout: 30 minutes
+end note
+@enduml

@@ -1,0 +1,16 @@
+@startuml
+title 中文 PlantUML 示例
+actor "用户" as User
+participant "订单服务" as Order
+database "数据库" as DB
+
+User -> Order : 提交订单
+Order -> DB : 保存订单记录
+DB --> Order : 订单号
+Order --> User : 返回下单结果
+
+note right of Order
+  中文注释第一行
+  中文注释第二行
+end note
+@enduml
