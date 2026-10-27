@@ -35,7 +35,9 @@ let mainWindow = null;
 let tray = null;
 let trayHintShown = false;
 let isQuitting = false;
-let closePromptOpen = false;
+let closePromptState = 'idle';
+let closePromptTimer = null;
+let closeRequestToken = 0;
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -217,8 +219,58 @@ function notifyMinimizedToTray() {
   }
 }
 
-async function promptCloseAction(win) {
-  closePromptOpen = true;
+function clearClosePromptTimer() {
+  if (closePromptTimer) {
+    clearTimeout(closePromptTimer);
+    closePromptTimer = null;
+  }
+}
+
+function hideToTray(win) {
+  if (!createTray()) return false;
+  win.hide();
+  notifyMinimizedToTray();
+  return true;
+}
+
+/**
+ * Ask the renderer to show the themed close dialog. The native dialog below is
+ * only a fallback for a crashed/loading renderer or an unanswered request.
+ */
+function requestClosePrompt(win) {
+  if (closePromptState !== 'idle' || isQuitting) return;
+  const webContents = win.webContents;
+  const rendererBusy =
+    (typeof webContents.isCrashed === 'function' && webContents.isCrashed()) ||
+    (typeof webContents.isLoading === 'function' && webContents.isLoading());
+
+  if (webContents.isDestroyed() || rendererBusy) {
+    void showNativeClosePrompt(win);
+    return;
+  }
+
+  const token = ++closeRequestToken;
+  closePromptState = 'renderer';
+  webContents.send('window:close-request', token);
+
+  clearClosePromptTimer();
+  closePromptTimer = setTimeout(() => {
+    closePromptTimer = null;
+    if (closePromptState !== 'renderer' || token !== closeRequestToken) return;
+    closePromptState = 'idle';
+    try {
+      webContents.send('window:close-request-cancelled');
+    } catch {
+      // Renderer may be gone; the native fallback will still work.
+    }
+    void showNativeClosePrompt(win);
+  }, 6000);
+}
+
+async function showNativeClosePrompt(win) {
+  if (isQuitting || !win || win.isDestroyed()) return;
+  closePromptState = 'native';
+  clearClosePromptTimer();
   try {
     const { response } = await dialog.showMessageBox(win, {
       type: 'question',
@@ -234,19 +286,16 @@ async function promptCloseAction(win) {
     if (isQuitting || win.isDestroyed()) return;
 
     if (response === 0) {
-      if (!createTray()) {
+      if (!hideToTray(win)) {
         dialog.showErrorBox('UML Live', '无法创建系统托盘图标，窗口将保持打开。');
-        return;
       }
-      win.hide();
-      notifyMinimizedToTray();
     } else {
       quitApplication();
     }
   } catch (error) {
     console.error('[window] Close prompt failed:', error);
   } finally {
-    closePromptOpen = false;
+    if (closePromptState === 'native') closePromptState = 'idle';
   }
 }
 
@@ -293,13 +342,17 @@ async function createWindow() {
     saveWindowState(win);
     if (isQuitting) return;
     event.preventDefault();
-    if (!closePromptOpen) void promptCloseAction(win);
+    if (closePromptState === 'idle') requestClosePrompt(win);
   });
   win.on('session-end', () => {
     // Windows shutdown/logoff must not be blocked by the close confirmation.
     isQuitting = true;
+    closePromptState = 'idle';
+    clearClosePromptTimer();
   });
   win.on('closed', () => {
+    clearClosePromptTimer();
+    closePromptState = 'idle';
     if (mainWindow === win) mainWindow = null;
   });
 
@@ -422,6 +475,35 @@ function registerIpc() {
     return { canceled: false, filePath, content: data.toString('utf8').replace(/^\uFEFF/, '') };
   });
 
+  ipcMain.handle('window:close-response', async (event, token, action) => {
+    if (!['tray', 'quit'].includes(action)) {
+      return { ok: false, error: '未知的关闭操作。' };
+    }
+    if (closePromptState !== 'renderer' || token !== closeRequestToken) {
+      return { ok: false, stale: true };
+    }
+
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (!win || win.isDestroyed()) {
+      closePromptState = 'idle';
+      clearClosePromptTimer();
+      return { ok: false, error: '窗口已经关闭。' };
+    }
+
+    clearClosePromptTimer();
+    closePromptState = 'idle';
+
+    if (action === 'tray') {
+      if (!hideToTray(win)) {
+        return { ok: false, error: '无法创建系统托盘图标，窗口将保持打开。' };
+      }
+      return { ok: true };
+    }
+
+    quitApplication();
+    return { ok: true };
+  });
+
   ipcMain.handle('clipboard:image', async (_event, data) => {
     const buffer = toBuffer(data);
     if (!buffer || buffer.length === 0) return { ok: false, error: 'No image data.' };
@@ -500,6 +582,8 @@ if (hasSingleInstanceLock) {
 
 app.on('before-quit', () => {
   isQuitting = true;
+  closePromptState = 'idle';
+  clearClosePromptTimer();
   if (tray) {
     tray.destroy();
     tray = null;

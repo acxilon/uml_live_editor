@@ -256,6 +256,25 @@
 
   <div class="toast-stack" id="toastStack" role="status" aria-live="polite"></div>
 
+  <div class="close-dialog-backdrop" id="closeDialogBackdrop" hidden>
+    <div class="close-dialog" id="closeDialog" role="alertdialog" aria-modal="true" aria-labelledby="closeDialogTitle" aria-describedby="closeDialogDesc">
+      <div class="close-dialog-head">
+        <img class="close-dialog-logo" src="./favicon.svg" alt="" />
+        <div class="close-dialog-heading">
+          <h2 id="closeDialogTitle">关闭 UML Live</h2>
+          <p>请选择窗口关闭后的操作</p>
+        </div>
+      </div>
+      <p class="close-dialog-desc" id="closeDialogDesc">
+        最小化到系统托盘后，UML Live 会继续在后台运行。你可以单击托盘图标重新打开，或通过托盘菜单退出。
+      </p>
+      <div class="close-dialog-actions">
+        <button class="btn btn-soft close-dialog-quit" id="closeDialogQuit" type="button">退出 UML Live</button>
+        <button class="btn btn-accent" id="closeDialogTray" type="button">最小化到托盘</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-backdrop" id="modalBackdrop" hidden>
     <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <header class="modal-header">

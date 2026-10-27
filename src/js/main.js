@@ -82,6 +82,10 @@ const dom = {
   modalTitle: $('modalTitle'),
   modalBody: $('modalBody'),
   modalCloseBtn: $('modalCloseBtn'),
+  closeDialogBackdrop: $('closeDialogBackdrop'),
+  closeDialog: $('closeDialog'),
+  closeDialogTray: $('closeDialogTray'),
+  closeDialogQuit: $('closeDialogQuit'),
   toastStack: $('toastStack'),
   dropOverlay: $('dropOverlay'),
 };
@@ -165,6 +169,9 @@ let openPopover = null;
 let popoverAnchor = null;
 let removePopoverListeners = null;
 let lastFocused = null;
+let closeDialogOpen = false;
+let closeDialogToken = null;
+let closeDialogPreviousFocus = null;
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
@@ -1418,11 +1425,81 @@ function setupModal() {
   });
 }
 
+function showCloseDialog(token) {
+  if (closeDialogOpen) return;
+  closePopover();
+  if (!dom.modalBackdrop.hidden) closeModal();
+  closeDialogOpen = true;
+  closeDialogToken = token ?? null;
+  closeDialogPreviousFocus = document.activeElement;
+  dom.closeDialogBackdrop.hidden = false;
+  document.body.classList.add('has-close-dialog');
+  requestAnimationFrame(() => dom.closeDialogTray.focus({ preventScroll: true }));
+}
+
+function hideCloseDialog({ restoreFocus = true } = {}) {
+  if (!closeDialogOpen) return;
+  closeDialogOpen = false;
+  closeDialogToken = null;
+  dom.closeDialogBackdrop.hidden = true;
+  document.body.classList.remove('has-close-dialog');
+  if (restoreFocus && closeDialogPreviousFocus?.isConnected) {
+    closeDialogPreviousFocus.focus({ preventScroll: true });
+  }
+  closeDialogPreviousFocus = null;
+}
+
+async function respondCloseDialog(action) {
+  if (!closeDialogOpen) return;
+  const token = closeDialogToken;
+  hideCloseDialog();
+  try {
+    const result = await bridge?.respondClosePrompt?.(token, action);
+    if (result && result.ok === false && !result.stale) {
+      toast(result.error || '关闭操作失败。', 'error', 4200);
+    }
+  } catch (error) {
+    toast(`关闭操作失败：${error?.message ?? error}`, 'error', 4200);
+  }
+}
+
+function setupClosePrompt() {
+  bridge?.onCloseRequest?.((token) => showCloseDialog(token));
+  bridge?.onCloseRequestCancelled?.(() => hideCloseDialog());
+  dom.closeDialogTray.addEventListener('click', () => void respondCloseDialog('tray'));
+  dom.closeDialogQuit.addEventListener('click', () => void respondCloseDialog('quit'));
+}
+
 /* -------------------------------------------------------------------------- */
 /* Keyboard and drag & drop                                                   */
 /* -------------------------------------------------------------------------- */
 
 function handleGlobalShortcut(event) {
+  // The close confirmation is a real modal: only Tab/Enter/Space/Esc operate
+  // while it is open, and Escape chooses the default (minimize to tray).
+  if (closeDialogOpen) {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      void respondCloseDialog('tray');
+    } else if (event.key === 'Tab') {
+      event.preventDefault();
+      const buttons = [dom.closeDialogQuit, dom.closeDialogTray];
+      const currentIndex = buttons.indexOf(document.activeElement);
+      const step = event.shiftKey ? -1 : 1;
+      const nextIndex =
+        currentIndex === -1 ? 0 : (currentIndex + step + buttons.length) % buttons.length;
+      buttons[nextIndex].focus({ preventScroll: true });
+    } else if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      const action = document.activeElement === dom.closeDialogQuit ? 'quit' : 'tray';
+      void respondCloseDialog(action);
+    } else {
+      event.preventDefault();
+    }
+    event.stopPropagation();
+    return;
+  }
+
   // A desktop diagram tool should not lose the current view to a browser reload
   // or print dialog triggered from muscle memory.
   if (event.key === 'F5') {
@@ -1656,6 +1733,7 @@ function setupUiEvents() {
 
   document.addEventListener('keydown', handleGlobalShortcut, true);
   setupModal();
+  setupClosePrompt();
   setupDropZone();
 
   window.addEventListener('beforeunload', persistNow);
