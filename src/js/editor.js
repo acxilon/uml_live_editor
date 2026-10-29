@@ -4,6 +4,27 @@ import { Compartment, EditorState } from '@codemirror/state';
 import { EditorView, keymap, placeholder } from '@codemirror/view';
 import { diagramSyntaxHighlighting, languageSupport } from './highlight.js';
 
+export const EDITOR_FONT_DEFAULT = 12.8;
+export const EDITOR_FONT_MIN = 9;
+export const EDITOR_FONT_MAX = 32;
+
+function clampFontSize(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return EDITOR_FONT_DEFAULT;
+  return Math.min(EDITOR_FONT_MAX, Math.max(EDITOR_FONT_MIN, Math.round(number * 10) / 10));
+}
+
+function editorFontTheme(fontSize) {
+  return EditorView.theme({
+    '.cm-scroller': {
+      fontSize: `${fontSize}px`,
+    },
+    '.cm-lineNumbers .cm-gutterElement': {
+      fontSize: `${Math.max(9, Math.round(fontSize * 0.78 * 10) / 10)}px`,
+    },
+  });
+}
+
 function editorTheme(dark) {
   return EditorView.theme(
     {
@@ -14,7 +35,6 @@ function editorTheme(dark) {
       },
       '.cm-scroller': {
         fontFamily: 'var(--font-mono)',
-        fontSize: '12.8px',
         lineHeight: '1.72',
         overscrollBehavior: 'contain',
       },
@@ -39,7 +59,6 @@ function editorTheme(dark) {
       '.cm-lineNumbers .cm-gutterElement': {
         padding: '0 7px 0 8px',
         minWidth: '27px',
-        fontSize: '10px',
       },
       '.cm-activeLine': {
         backgroundColor: 'var(--editor-active-line)',
@@ -202,16 +221,41 @@ export class CodeEditor {
   constructor(parent, options = {}) {
     this.onChange = options.onChange ?? (() => {});
     this.onCursor = options.onCursor ?? (() => {});
+    this.onFontSize = options.onFontSize ?? (() => {});
     this.language = options.language ?? 'plantuml';
     this.dark = options.dark !== false;
     this.silent = false;
+    this.fontSize = clampFontSize(options.fontSize ?? EDITOR_FONT_DEFAULT);
 
     this.languageConf = new Compartment();
     this.themeConf = new Compartment();
+    this.fontConf = new Compartment();
 
     this.view = new EditorView({
       parent,
       state: this._createState(options.doc ?? '', this.language, this.dark),
+    });
+
+    // Ctrl/Cmd + wheel zooms the code font. Plain wheel keeps scrolling.
+    this._handleWheel = (event) => {
+      if (!event.ctrlKey && !event.metaKey) return;
+      if (!Number.isFinite(event.deltaY) || event.deltaY === 0) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const unit =
+        event.deltaMode === 1
+          ? 16
+          : event.deltaMode === 2
+            ? this.view.scrollDOM.clientHeight
+            : 1;
+      const pixels = Math.abs(event.deltaY) * unit;
+      const step = Math.min(3, Math.max(0.5, pixels / 100)) * 0.8;
+      const direction = event.deltaY < 0 ? 1 : -1;
+      this.setFontSize(this.fontSize + direction * step);
+    };
+    this.view.scrollDOM.addEventListener('wheel', this._handleWheel, {
+      passive: false,
+      capture: true,
     });
 
     this._emitCursor();
@@ -226,6 +270,7 @@ export class CodeEditor {
         EditorState.tabSize.of(2),
         this.languageConf.of(languageSupport(language)),
         this.themeConf.of(editorTheme(dark)),
+        this.fontConf.of(editorFontTheme(this.fontSize)),
         diagramSyntaxHighlighting,
         placeholder(placeholderFor(language)),
         keymap.of([indentWithTab]),
@@ -287,6 +332,22 @@ export class CodeEditor {
     this.view.dispatch({
       effects: this.themeConf.reconfigure(editorTheme(dark)),
     });
+  }
+
+  setFontSize(value) {
+    const next = clampFontSize(value);
+    if (next === this.fontSize) return false;
+    this.fontSize = next;
+    this.view.dispatch({
+      effects: this.fontConf.reconfigure(editorFontTheme(next)),
+    });
+    this.view.requestMeasure();
+    this.onFontSize(next);
+    return true;
+  }
+
+  getFontSize() {
+    return this.fontSize;
   }
 
   getValue() {

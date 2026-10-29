@@ -1,5 +1,10 @@
 import '../styles.css';
-import { CodeEditor } from './editor.js';
+import {
+  CodeEditor,
+  EDITOR_FONT_DEFAULT,
+  EDITOR_FONT_MAX,
+  EDITOR_FONT_MIN,
+} from './editor.js';
 import { PreviewController } from './preview.js';
 import {
   addSvgBackground,
@@ -63,6 +68,8 @@ const dom = {
   languageSwitch: $('languageSwitch'),
   cursorInfo: $('cursorInfo'),
   charInfo: $('charInfo'),
+  editorFontBtn: $('editorFontBtn'),
+  editorFontSize: $('editorFontSize'),
   saveState: $('saveState'),
   editorLangBadge: $('editorLangBadge'),
   docName: $('docName'),
@@ -144,6 +151,9 @@ const state = {
   pngScale: [1, 2, 3].includes(Number(stored.pngScale)) ? Number(stored.pngScale) : 2,
   // White is now the default export background; transparency must be opted into.
   transparent: stored.exportBackground === 'transparent',
+  editorFontSize: Number.isFinite(Number(stored.editorFontSize))
+    ? clamp(Math.round(Number(stored.editorFontSize) * 10) / 10, EDITOR_FONT_MIN, EDITOR_FONT_MAX)
+    : EDITOR_FONT_DEFAULT,
   revision: 0,
   renderToken: 0,
   renderTimer: null,
@@ -223,6 +233,7 @@ function persistNow() {
         split: state.split,
         pngScale: state.pngScale,
         exportBackground: state.transparent ? 'transparent' : 'white',
+        editorFontSize: state.editorFontSize,
       }),
     );
     setSaveState('saved');
@@ -298,6 +309,13 @@ function updateCursorInfo(info) {
   if (!info) return;
   dom.cursorInfo.textContent = `行 ${info.line}, 列 ${info.column}`;
   dom.charInfo.textContent = `${formatNumber(info.length)} 字符`;
+}
+
+function updateEditorFontUi() {
+  const size = state.editorFontSize.toFixed(1);
+  dom.editorFontSize.textContent = size;
+  dom.editorFontBtn.title = `代码字体 ${size} px · Ctrl+滚轮调整，点击重置`;
+  dom.editorFontBtn.setAttribute('aria-label', `代码字体 ${size} 像素，点击重置`);
 }
 
 function updateRenderButton() {
@@ -1413,6 +1431,7 @@ function openShortcutsModal() {
       ['保存源码', ['Ctrl', 'S']],
       ['源码另存为', ['Ctrl', 'Shift', 'S']],
       ['查找 / 替换', ['Ctrl', 'F']],
+      ['调整代码字体大小', ['Ctrl', '滚轮']],
     ]),
     shortcutSection('导出', [
       ['导出 SVG', ['Ctrl', 'Shift', 'E']],
@@ -1809,6 +1828,11 @@ function setupUiEvents() {
   dom.themeBtn.addEventListener('click', toggleTheme);
   dom.shortcutsBtn.addEventListener('click', openShortcutsModal);
   dom.footerShortcutsBtn.addEventListener('click', openShortcutsModal);
+  dom.editorFontBtn.addEventListener('click', () => {
+    if (editor.setFontSize(EDITOR_FONT_DEFAULT)) {
+      toast(`代码字体已重置为 ${EDITOR_FONT_DEFAULT} px`, 'info', 1600);
+    }
+  });
 
   dom.exportSvgBtn.addEventListener('click', () => {
     void runExportAction(dom.exportSvgBtn, () => exportSvg());
@@ -1870,6 +1894,7 @@ function setupDebugApi() {
         : null,
       lastDims: state.lastDims,
       zoom: preview.getZoomPercent(),
+      editorFontSize: state.editorFontSize,
       engineReady: { ...state.engineReady },
     }),
     setCode: async (language, code) => {
@@ -1914,6 +1939,11 @@ function setupDebugApi() {
     copyImage: async (options = {}) => copyImage({ quiet: true, ...options }),
     copySvgSource: async (options = {}) => copySvgSource({ quiet: true, ...options }),
     getLastSvg: () => state.lastSvg,
+    getEditorFontSize: () => editor.getFontSize(),
+    setEditorFontSize: (size) => {
+      const changed = editor.setFontSize(size);
+      return { ok: true, changed, size: editor.getFontSize() };
+    },
     getTemplates: () => templates.map(({ id, language, name }) => ({ id, language, name })),
   };
 }
@@ -1926,9 +1956,16 @@ function boot() {
     doc: state.codes[state.language],
     language: state.language,
     dark: state.theme === 'dark',
+    fontSize: state.editorFontSize,
     onChange: onCodeChange,
     onCursor: updateCursorInfo,
+    onFontSize: (size) => {
+      state.editorFontSize = size;
+      updateEditorFontUi();
+      schedulePersist();
+    },
   });
+  updateEditorFontUi();
 
   preview = new PreviewController({
     viewport: dom.previewViewport,

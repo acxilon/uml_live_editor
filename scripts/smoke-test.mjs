@@ -151,6 +151,32 @@ if (!debugReady) {
   process.exit(1);
 }
 
+// Verify the editor Ctrl+wheel font gesture and keep screenshots at the default size.
+await evaluate(`window.__umlLive.setEditorFontSize(12.8)`);
+await sleep(200);
+const editorFont = await evaluate(`(() => {
+  const scroller = document.querySelector('.cm-scroller');
+  const before = window.__umlLive.getState().editorFontSize;
+  const rect = scroller.getBoundingClientRect();
+  scroller.dispatchEvent(new WheelEvent('wheel', {
+    deltaY: -120,
+    ctrlKey: true,
+    clientX: rect.left + rect.width / 2,
+    clientY: rect.top + rect.height / 2,
+    bubbles: true,
+    cancelable: true
+  }));
+  return {
+    before,
+    after: window.__umlLive.getState().editorFontSize,
+    css: getComputedStyle(scroller).fontSize,
+    footer: document.getElementById('editorFontSize').textContent
+  };
+})()`);
+console.log('[editor-font]', JSON.stringify(editorFont));
+await evaluate(`window.__umlLive.setEditorFontSize(12.8)`);
+await sleep(400);
+
 const initialState = await evaluate(`(async () => {
   for (let i = 0; i < 150; i += 1) {
     const s = window.__umlLive.getState();

@@ -24,7 +24,7 @@
 - **纯 JavaScript 的 PlantUML**：使用 PlantUML 官方发布的 [`@plantuml/core`](https://www.npmjs.com/package/@plantuml/core) TeaVM JavaScript 构建；Graphviz 布局由 [Viz.js](https://github.com/mdaines/viz-js) 的 WebAssembly 版本提供。
   **没有 Java、`plantuml.jar`、本地服务端进程，也不请求 plantuml.com。**
 - **Mermaid 12**：本地打包的 Mermaid 12.2 渲染器，覆盖流程图、时序图、类图、ER、状态图、甘特图、思维导图等常用图表。
-- **面向开发的编辑器**：CodeMirror 6、行号、PlantUML / Mermaid 语法高亮、自动换行、搜索替换、撤销历史。
+- **面向开发的编辑器**：CodeMirror 6、行号、PlantUML / Mermaid 语法高亮、自动换行、搜索替换、撤销历史，并支持按 `Ctrl + 滚轮` 调整代码字号。
 - **可操作的预览**：鼠标滚轮直接缩放、拖拽平移、一键恢复 100% 并居中、双击适应窗口。
 - **平面图表样式**：预览与导出不添加外阴影，并关闭 Mermaid 12 neo 样式内置的图形阴影。
 - **全屏预览**：预览工具栏新增展开按钮，一键收起代码区，让图表占满工作区；按 `F11` 或 `Esc` 恢复。
@@ -109,6 +109,7 @@ npm run dist
 ### 语言与渲染
 
 - 编辑器左上角切换 **PlantUML / Mermaid**；两种语言的源码、文件路径和编辑内容相互独立。
+- 代码区按住 `Ctrl`（macOS 为 `Cmd`）滚动滚轮可调整代码字体大小，范围 9–32 px；底部 `Aa` 状态显示当前字号，点击可恢复默认的 12.8 px。
 - 右上「实时」开关控制自动渲染。关闭后按 `Ctrl+Enter` 或点击 ▶ 手动渲染。
 - 顶部文件夹菜单支持：新建空白图表、打开源码、保存源码、另存为。
 - 可以直接把 `.puml` / `.plantuml` / `.mmd` / `.mermaid` / `.txt` 文件拖进窗口打开。
@@ -147,6 +148,7 @@ npm run dist
 | 新建空白图表 | `Ctrl + N` |
 | 保存源码 / 另存为 | `Ctrl + S` / `Ctrl + Shift + S` |
 | 查找 / 替换 | `Ctrl + F` |
+| 调整代码字体大小 | `Ctrl + 滚轮` |
 | 切换 PlantUML / Mermaid | `Ctrl + 1` / `Ctrl + 2` |
 | 放大 / 缩小 / 恢复 100% 并居中 | `Ctrl +` / `Ctrl -` / `Ctrl 0` |
 | 全屏预览 / 退出 | `F11` |
@@ -167,7 +169,7 @@ npm run dist
 
 ### 本地草稿与窗口状态
 
-- 正在编辑的源码、语言、主题、模板来源、导出倍率、分栏比例保存在本机 `localStorage`。
+- 正在编辑的源码、语言、主题、模板来源、导出倍率、分栏比例和编辑器字号保存在本机 `localStorage`。
 - 窗口位置与大小保存在 `%APPDATA%\UML Live\window-state.json`。
 - 应用不上传源码，也不包含遥测。卸载或删除 `%APPDATA%\UML Live` 会同时清除本地草稿与窗口状态。
 
