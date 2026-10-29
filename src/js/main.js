@@ -54,8 +54,8 @@ const dom = {
   copyImageBtn: $('copyImageBtn'),
   copyOptionsBtn: $('copyOptionsBtn'),
   exportPngBtn: $('exportPngBtn'),
-  pngOptionsBtn: $('pngOptionsBtn'),
   exportSvgBtn: $('exportSvgBtn'),
+  exportOptionsBtn: $('exportOptionsBtn'),
   renderBtn: $('renderBtn'),
   liveToggle: $('liveToggle'),
   templatesBtn: $('templatesBtn'),
@@ -311,6 +311,7 @@ function updateActions() {
   dom.copyOptionsBtn.disabled = !canExport;
   dom.exportPngBtn.disabled = !canExport;
   dom.exportSvgBtn.disabled = !canExport;
+  dom.exportOptionsBtn.disabled = !canExport;
   const hasDiagram = Boolean(preview?.hasDiagram);
   dom.zoomInBtn.disabled = !hasDiagram;
   dom.zoomOutBtn.disabled = !hasDiagram;
@@ -322,6 +323,7 @@ function updateActions() {
 function updatePngLabels() {
   const suffix = `${state.pngScale}× · ${state.transparent ? '透明背景' : '纯白背景'}`;
   dom.exportPngBtn.title = `导出 PNG (${suffix}) · Ctrl+Shift+P`;
+  dom.exportOptionsBtn.title = `导出设置（PNG / SVG / 复制图片） · ${state.transparent ? '透明背景' : '纯白背景'}`;
   dom.copyImageBtn.title = `复制 PNG 图片 (${suffix}) · Ctrl+Shift+C`;
   dom.copyOptionsBtn.title = '复制选项：PNG 图片 / SVG 源码';
 }
@@ -1283,28 +1285,43 @@ function openCopyMenu(anchor) {
   showPopover(menu, anchor);
 }
 
-function openPngOptionsMenu(anchor) {
+function openExportOptionsMenu(anchor) {
   if (openPopover && popoverAnchor === anchor) {
     closePopover();
     return;
   }
   const menu = createMenu();
-  menu.style.minWidth = '258px';
+  menu.style.minWidth = '286px';
   const heading = document.createElement('div');
   heading.className = 'menu-heading';
   heading.textContent = '导出设置';
   menu.appendChild(heading);
 
+  const scope = document.createElement('div');
+  scope.className = 'menu-heading';
+  scope.style.paddingTop = '0';
+  scope.style.textTransform = 'none';
+  scope.style.letterSpacing = '0';
+  scope.style.fontSize = '10px';
+  scope.textContent = '适用于 PNG / SVG / 复制图片';
+  menu.appendChild(scope);
+
   const info = document.createElement('div');
   info.className = 'menu-heading';
-  info.style.paddingTop = '0';
+  info.style.paddingTop = '3px';
   info.style.textTransform = 'none';
   info.style.letterSpacing = '0';
-  info.style.fontSize = '10px';
+  info.style.fontSize = '9.5px';
   info.textContent = state.lastDims
     ? `当前画布 ${Math.round(state.lastDims.width)} × ${Math.round(state.lastDims.height)} px`
     : '完成渲染后可选择导出倍率';
   menu.appendChild(info);
+
+  const scaleHeading = document.createElement('div');
+  scaleHeading.className = 'menu-heading';
+  scaleHeading.style.paddingTop = '7px';
+  scaleHeading.textContent = 'PNG / 复制图片分辨率';
+  menu.appendChild(scaleHeading);
 
   const scaleButtons = [];
   for (const scale of [1, 2, 3]) {
@@ -1341,7 +1358,7 @@ function openPngOptionsMenu(anchor) {
   transparent.className = 'menu-radio';
   transparent.setAttribute('role', 'menuitemcheckbox');
   const checked = state.transparent;
-  transparent.innerHTML = `<span class="menu-check${checked ? ' is-checked' : ''}"><svg class="icon"><use href="#i-check"></use></svg></span><span>透明背景</span>`;
+  transparent.innerHTML = `<span class="menu-check${checked ? ' is-checked' : ''}"><svg class="icon"><use href="#i-check"></use></svg></span><span>透明背景</span><span class="menu-meta">PNG / SVG / 复制</span>`;
   transparent.setAttribute('aria-checked', String(checked));
   transparent.addEventListener('click', () => {
     state.transparent = !state.transparent;
@@ -1363,7 +1380,7 @@ function openPngOptionsMenu(anchor) {
   note.style.fontSize = '9.5px';
   note.style.lineHeight = '1.5';
   note.textContent =
-    '默认导出为纯白背景，深色主题下会自动使用浅色图表配色；透明背景同时作用于 PNG 和 SVG。';
+    '默认导出为纯白背景，深色主题下会自动使用浅色图表配色；透明背景同时作用于 PNG、SVG 和复制图片。';
   menu.appendChild(note);
 
   showPopover(menu, anchor);
@@ -1787,7 +1804,7 @@ function setupUiEvents() {
     openTemplatesMenu(dom.placeholderTemplatesBtn),
   );
   dom.fileMenuBtn.addEventListener('click', () => openFileMenu(dom.fileMenuBtn));
-  dom.pngOptionsBtn.addEventListener('click', () => openPngOptionsMenu(dom.pngOptionsBtn));
+  dom.exportOptionsBtn.addEventListener('click', () => openExportOptionsMenu(dom.exportOptionsBtn));
   dom.copyOptionsBtn.addEventListener('click', () => openCopyMenu(dom.copyOptionsBtn));
   dom.themeBtn.addEventListener('click', toggleTheme);
   dom.shortcutsBtn.addEventListener('click', openShortcutsModal);

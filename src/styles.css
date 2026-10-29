@@ -987,6 +987,21 @@ html[data-theme="dark"] .seg-btn.is-active {
   border-left-color: var(--border) !important;
 }
 
+.export-options-btn {
+  gap: 5px;
+  padding: 0 8px;
+  color: var(--text-3);
+}
+
+.export-options-btn .icon {
+  width: 13px;
+  height: 13px;
+}
+
+.export-options-btn:hover {
+  color: var(--text-2);
+}
+
 /* Preview status */
 
 .preview-status {
@@ -1960,6 +1975,15 @@ body.is-exporting {
   }
 
   .hint {
+    display: none;
+  }
+
+  .export-options-btn {
+    width: 30px;
+    padding: 0;
+  }
+
+  .export-options-btn .btn-label {
     display: none;
   }
 }

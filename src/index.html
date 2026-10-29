@@ -34,6 +34,7 @@
     <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></symbol>
     <symbol id="i-external" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
     <symbol id="i-code" viewBox="0 0 24 24"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 6h9M18 6h2M4 12h2M11 12h9M4 18h7M16 18h4"/><circle cx="15.5" cy="6" r="2.2"/><circle cx="8.5" cy="12" r="2.2"/><circle cx="13.5" cy="18" r="2.2"/></symbol>
     <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3ZM19 15l.95 2.55L22.5 18.5l-2.55.95L19 22l-.95-2.55L15.5 18.5l2.55-.95L19 15Z"/></symbol>
     <symbol id="i-zoom-in" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35M8 11h6M11 8v6"/></symbol>
     <symbol id="i-maximize" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></symbol>
@@ -174,19 +175,19 @@
             </button>
           </div>
 
-          <div class="split-button">
-            <button class="btn btn-soft" id="exportPngBtn" type="button" title="导出 PNG (Ctrl+Shift+P)">
-              <svg class="icon"><use href="#i-download" /></svg>
-              <span class="btn-label">PNG</span>
-            </button>
-            <button class="btn btn-soft split-chevron" id="pngOptionsBtn" type="button" title="PNG 导出选项" aria-haspopup="menu" aria-label="PNG 导出选项">
-              <svg class="icon"><use href="#i-chevron-down" /></svg>
-            </button>
-          </div>
+          <button class="btn btn-soft" id="exportPngBtn" type="button" title="导出 PNG (Ctrl+Shift+P)">
+            <svg class="icon"><use href="#i-download" /></svg>
+            <span class="btn-label">PNG</span>
+          </button>
 
           <button class="btn btn-accent" id="exportSvgBtn" type="button" title="导出 SVG 矢量图 (Ctrl+Shift+E)">
             <svg class="icon"><use href="#i-download" /></svg>
             <span class="btn-label">SVG</span>
+          </button>
+
+          <button class="btn export-options-btn" id="exportOptionsBtn" type="button" title="导出设置（PNG / SVG / 复制图片）" aria-haspopup="menu" aria-label="导出设置">
+            <svg class="icon"><use href="#i-sliders" /></svg>
+            <span class="btn-label">设置</span>
           </button>
         </header>
 
