@@ -55,12 +55,12 @@
 
 ### 直接使用
 
-当前工作区已生成 v1.0.0 的 Windows x64 构建产物：
+当前工作区已生成 v1.0.1 的 Windows x64 构建产物：
 
 | 文件 | 说明 |
 | --- | --- |
-| [`release/UML Live-Setup-1.0.0.exe`](<release/UML Live-Setup-1.0.0.exe>) | NSIS 安装包，可选择安装目录并创建桌面 / 开始菜单快捷方式 |
-| [`release/UML Live-Portable-1.0.0.exe`](<release/UML Live-Portable-1.0.0.exe>) | 免安装便携版，双击运行 |
+| [`release/UML Live-Setup-1.0.1.exe`](<release/UML Live-Setup-1.0.1.exe>) | NSIS 安装包，可选择安装目录并创建桌面 / 开始菜单快捷方式 |
+| [`release/UML Live-Portable-1.0.1.exe`](<release/UML Live-Portable-1.0.1.exe>) | 免安装便携版，双击运行 |
 | [`release/SHA256SUMS.txt`](<release/SHA256SUMS.txt>) | 安装包 SHA-256 校验值 |
 
 系统要求：**Windows 10 / 11（x64）**。安装版和便携版运行时都不需要 Java、Node.js 或其他渲染服务。
@@ -295,8 +295,8 @@ npm run dist
 
 生成：
 
-- `release/UML Live-Setup-1.0.0.exe`（NSIS 安装包）
-- `release/UML Live-Portable-1.0.0.exe`（便携版）
+- `release/UML Live-Setup-1.0.1.exe`（NSIS 安装包）
+- `release/UML Live-Portable-1.0.1.exe`（便携版）
 
 如需重新生成 `release/SHA256SUMS.txt`：
 

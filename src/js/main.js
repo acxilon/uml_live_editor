@@ -24,7 +24,7 @@ import {
   templatesFor,
 } from './templates.js';
 
-const APP_VERSION = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : '1.0.0';
+const APP_VERSION = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : '1.0.1';
 const PLANTUML_VERSION = plantumlVersion();
 const MERMAID_VERSION = mermaidVersion();
 const STORE_KEY = 'uml-live.state.v2';

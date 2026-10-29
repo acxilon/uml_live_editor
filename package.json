@@ -1,7 +1,7 @@
 {
   "name": "uml-live-editor",
   "productName": "UML Live",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A lightweight Windows desktop tool that renders PlantUML and Mermaid diagrams live, side by side with your code.",
   "type": "module",
   "main": "electron/main.js",
