@@ -174,7 +174,13 @@ const editorFont = await evaluate(`(() => {
   };
 })()`);
 console.log('[editor-font]', JSON.stringify(editorFont));
-await evaluate(`window.__umlLive.setEditorFontSize(12.8)`);
+const editorFontBounds = await evaluate(`(() => {
+  const max = window.__umlLive.setEditorFontSize(999).size;
+  const min = window.__umlLive.setEditorFontSize(-999).size;
+  window.__umlLive.setEditorFontSize(12.8);
+  return { min, max };
+})()`);
+console.log('[editor-font-bounds]', JSON.stringify(editorFontBounds));
 await sleep(400);
 
 const initialState = await evaluate(`(async () => {

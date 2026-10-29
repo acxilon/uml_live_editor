@@ -313,9 +313,12 @@ function updateCursorInfo(info) {
 
 function updateEditorFontUi() {
   const size = state.editorFontSize.toFixed(1);
+  const atMin = state.editorFontSize <= EDITOR_FONT_MIN + 0.01;
+  const atMax = state.editorFontSize >= EDITOR_FONT_MAX - 0.01;
+  const limitHint = atMin ? ' · 已到最小字号' : atMax ? ' · 已到最大字号' : '';
   dom.editorFontSize.textContent = size;
-  dom.editorFontBtn.title = `代码字体 ${size} px · Ctrl+滚轮调整，点击重置`;
-  dom.editorFontBtn.setAttribute('aria-label', `代码字体 ${size} 像素，点击重置`);
+  dom.editorFontBtn.title = `代码字体 ${size} px（范围 ${EDITOR_FONT_MIN}–${EDITOR_FONT_MAX} px）· Ctrl+滚轮调整，点击重置${limitHint}`;
+  dom.editorFontBtn.setAttribute('aria-label', `代码字体 ${size} 像素，范围 ${EDITOR_FONT_MIN} 到 ${EDITOR_FONT_MAX} 像素，点击重置`);
 }
 
 function updateRenderButton() {
@@ -1431,7 +1434,7 @@ function openShortcutsModal() {
       ['保存源码', ['Ctrl', 'S']],
       ['源码另存为', ['Ctrl', 'Shift', 'S']],
       ['查找 / 替换', ['Ctrl', 'F']],
-      ['调整代码字体大小', ['Ctrl', '滚轮']],
+      ['调整代码字体大小（9–32 px）', ['Ctrl', '滚轮']],
     ]),
     shortcutSection('导出', [
       ['导出 SVG', ['Ctrl', 'Shift', 'E']],
