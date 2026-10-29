@@ -978,6 +978,15 @@ html[data-theme="dark"] .seg-btn.is-active {
   height: 12px;
 }
 
+.copy-split .split-chevron {
+  width: 21px;
+  border-left-color: transparent !important;
+}
+
+.copy-split:hover .split-chevron {
+  border-left-color: var(--border) !important;
+}
+
 /* Preview status */
 
 .preview-status {

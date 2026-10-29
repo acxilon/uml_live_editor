@@ -165,9 +165,14 @@
             <svg class="icon icon-collapse"><use href="#i-collapse" /></svg>
           </button>
 
-          <button class="btn btn-icon" id="copyImageBtn" type="button" title="复制图片到剪贴板 (Ctrl+Shift+C)" aria-label="复制图片">
-            <svg class="icon"><use href="#i-copy" /></svg>
-          </button>
+          <div class="split-button copy-split">
+            <button class="btn btn-icon" id="copyImageBtn" type="button" title="复制 PNG 图片 (Ctrl+Shift+C)" aria-label="复制 PNG 图片">
+              <svg class="icon"><use href="#i-copy" /></svg>
+            </button>
+            <button class="btn btn-icon split-chevron" id="copyOptionsBtn" type="button" title="复制选项" aria-haspopup="menu" aria-label="复制选项">
+              <svg class="icon"><use href="#i-chevron-down" /></svg>
+            </button>
+          </div>
 
           <div class="split-button">
             <button class="btn btn-soft" id="exportPngBtn" type="button" title="导出 PNG (Ctrl+Shift+P)">
@@ -179,7 +184,7 @@
             </button>
           </div>
 
-          <button class="btn btn-accent" id="exportSvgBtn" type="button" title="导出 SVG (Ctrl+Shift+E)">
+          <button class="btn btn-accent" id="exportSvgBtn" type="button" title="导出 SVG 矢量图 (Ctrl+Shift+E)">
             <svg class="icon"><use href="#i-download" /></svg>
             <span class="btn-label">SVG</span>
           </button>

@@ -52,6 +52,7 @@ const dom = {
   fitBtn: $('fitBtn'),
   previewOnlyBtn: $('previewOnlyBtn'),
   copyImageBtn: $('copyImageBtn'),
+  copyOptionsBtn: $('copyOptionsBtn'),
   exportPngBtn: $('exportPngBtn'),
   pngOptionsBtn: $('pngOptionsBtn'),
   exportSvgBtn: $('exportSvgBtn'),
@@ -307,6 +308,7 @@ function updateRenderButton() {
 function updateActions() {
   const canExport = state.currentValid && !state.exporting;
   dom.copyImageBtn.disabled = !canExport;
+  dom.copyOptionsBtn.disabled = !canExport;
   dom.exportPngBtn.disabled = !canExport;
   dom.exportSvgBtn.disabled = !canExport;
   const hasDiagram = Boolean(preview?.hasDiagram);
@@ -320,7 +322,8 @@ function updateActions() {
 function updatePngLabels() {
   const suffix = `${state.pngScale}× · ${state.transparent ? '透明背景' : '纯白背景'}`;
   dom.exportPngBtn.title = `导出 PNG (${suffix}) · Ctrl+Shift+P`;
-  dom.copyImageBtn.title = `复制图片 (${suffix}) · Ctrl+Shift+C`;
+  dom.copyImageBtn.title = `复制 PNG 图片 (${suffix}) · Ctrl+Shift+C`;
+  dom.copyOptionsBtn.title = '复制选项：PNG 图片 / SVG 源码';
 }
 
 function toast(message, type = 'success', duration = 2800) {
@@ -1022,6 +1025,32 @@ async function copyImage(options = {}) {
   }
 }
 
+async function copySvgSource(options = {}) {
+  if (!state.currentValid || !state.lastSvg) {
+    if (!options.quiet) toast('当前没有可复制的图表。', 'error');
+    return { ok: false, reason: 'empty' };
+  }
+  try {
+    document.body.classList.add('is-exporting');
+    const background = exportBackground();
+    const svg = await getExportSvg();
+    const prepared = prepareSvg(svg);
+    const markup = withXmlDeclaration(
+      background === 'transparent' ? prepared.markup : addSvgBackground(prepared.markup, background),
+    );
+    if (!(await copyText(markup))) throw new Error('剪贴板写入失败');
+    if (!options.quiet) {
+      toast(`已复制 SVG 矢量源码 · ${prepared.width} × ${prepared.height}px`);
+    }
+    return { ok: true, width: prepared.width, height: prepared.height };
+  } catch (error) {
+    if (!options.quiet) toast(`复制 SVG 源码失败：${error?.message ?? error}`, 'error', 4200);
+    return { ok: false, error: String(error?.message ?? error) };
+  } finally {
+    document.body.classList.remove('is-exporting');
+  }
+}
+
 async function runExportAction(button, action) {
   if (state.exporting) return;
   state.exporting = true;
@@ -1189,13 +1218,18 @@ function openFileMenu(anchor) {
   menu.appendChild(Object.assign(document.createElement('div'), { className: 'menu-separator' }));
   addMenuItem(menu, {
     icon: 'i-copy',
-    label: '复制图片',
+    label: '复制 PNG 图片',
     shortcut: 'Ctrl Shift C',
     onClick: () => runExportAction(dom.copyImageBtn, () => copyImage()),
   });
   addMenuItem(menu, {
+    icon: 'i-code',
+    label: '复制 SVG 源码（矢量）',
+    onClick: () => runExportAction(dom.copyImageBtn, () => copySvgSource()),
+  });
+  addMenuItem(menu, {
     icon: 'i-download',
-    label: '导出 SVG',
+    label: '导出 SVG（矢量图）',
     shortcut: 'Ctrl Shift E',
     onClick: () => runExportAction(dom.exportSvgBtn, () => exportSvg()),
   });
@@ -1208,6 +1242,44 @@ function openFileMenu(anchor) {
   menu.appendChild(Object.assign(document.createElement('div'), { className: 'menu-separator' }));
   addMenuItem(menu, { icon: 'i-keyboard', label: '键盘快捷键', shortcut: 'Ctrl /', onClick: openShortcutsModal });
   addMenuItem(menu, { icon: 'i-info', label: '关于 UML Live', onClick: openAboutModal });
+  showPopover(menu, anchor);
+}
+
+function openCopyMenu(anchor) {
+  if (openPopover && popoverAnchor === anchor) {
+    closePopover();
+    return;
+  }
+  const menu = createMenu();
+  menu.style.minWidth = '286px';
+  const heading = document.createElement('div');
+  heading.className = 'menu-heading';
+  heading.textContent = '复制';
+  menu.appendChild(heading);
+
+  addMenuItem(menu, {
+    icon: 'i-image',
+    label: '复制 PNG 图片',
+    shortcut: `${state.pngScale}×`,
+    onClick: () => runExportAction(dom.copyImageBtn, () => copyImage()),
+  });
+  addMenuItem(menu, {
+    icon: 'i-code',
+    label: '复制 SVG 源码（矢量）',
+    onClick: () => runExportAction(dom.copyImageBtn, () => copySvgSource()),
+  });
+
+  const note = document.createElement('div');
+  note.className = 'menu-heading';
+  note.style.paddingTop = '7px';
+  note.style.textTransform = 'none';
+  note.style.letterSpacing = '0';
+  note.style.fontWeight = '400';
+  note.style.fontSize = '9.5px';
+  note.style.lineHeight = '1.5';
+  note.textContent = 'SVG 以源码形式复制，可保存为 .svg；系统剪贴板不保留矢量图像格式。';
+  menu.appendChild(note);
+
   showPopover(menu, anchor);
 }
 
@@ -1716,6 +1788,7 @@ function setupUiEvents() {
   );
   dom.fileMenuBtn.addEventListener('click', () => openFileMenu(dom.fileMenuBtn));
   dom.pngOptionsBtn.addEventListener('click', () => openPngOptionsMenu(dom.pngOptionsBtn));
+  dom.copyOptionsBtn.addEventListener('click', () => openCopyMenu(dom.copyOptionsBtn));
   dom.themeBtn.addEventListener('click', toggleTheme);
   dom.shortcutsBtn.addEventListener('click', openShortcutsModal);
   dom.footerShortcutsBtn.addEventListener('click', openShortcutsModal);
@@ -1822,6 +1895,7 @@ function setupDebugApi() {
     exportPng: async (filePath, options = {}) =>
       exportPng({ filePath, quiet: true, ...options }),
     copyImage: async (options = {}) => copyImage({ quiet: true, ...options }),
+    copySvgSource: async (options = {}) => copySvgSource({ quiet: true, ...options }),
     getLastSvg: () => state.lastSvg,
     getTemplates: () => templates.map(({ id, language, name }) => ({ id, language, name })),
   };
