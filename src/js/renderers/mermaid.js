@@ -135,6 +135,9 @@ function configFor(dark) {
     startOnLoad: false,
     securityLevel: 'strict',
     suppressErrorRendering: true,
+    // Mermaid 12's "neo" look paints per-element drop shadows into its SVG.
+    // Suppress every SVG filter so diagrams stay flat without changing layout.
+    themeCSS: '* { filter: none !important; }',
     theme: dark ? 'dark' : 'default',
     darkMode: dark,
     fontFamily: UI_FONT,
