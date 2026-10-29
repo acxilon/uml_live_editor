@@ -1110,7 +1110,6 @@ html[data-theme="light"] .preview-viewport::after {
   left: 0;
   z-index: 2;
   transform-origin: 0 0;
-  will-change: transform;
   pointer-events: none;
   transition: opacity 180ms ease, filter 180ms ease;
 }
