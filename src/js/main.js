@@ -141,7 +141,8 @@ const state = {
   live: stored.live !== false,
   split: clamp(Number(stored.split) || 48, 26, 74),
   pngScale: [1, 2, 3].includes(Number(stored.pngScale)) ? Number(stored.pngScale) : 2,
-  transparent: stored.transparent === true,
+  // White is now the default export background; transparency must be opted into.
+  transparent: stored.exportBackground === 'transparent',
   revision: 0,
   renderToken: 0,
   renderTimer: null,
@@ -220,7 +221,7 @@ function persistNow() {
         live: state.live,
         split: state.split,
         pngScale: state.pngScale,
-        transparent: state.transparent,
+        exportBackground: state.transparent ? 'transparent' : 'white',
       }),
     );
     setSaveState('saved');
@@ -317,7 +318,7 @@ function updateActions() {
 }
 
 function updatePngLabels() {
-  const suffix = `${state.pngScale}× · ${state.transparent ? '透明背景' : '主题背景'}`;
+  const suffix = `${state.pngScale}× · ${state.transparent ? '透明背景' : '纯白背景'}`;
   dom.exportPngBtn.title = `导出 PNG (${suffix}) · Ctrl+Shift+P`;
   dom.copyImageBtn.title = `复制图片 (${suffix}) · Ctrl+Shift+C`;
 }
@@ -879,10 +880,27 @@ async function saveSource({ saveAs = false } = {}) {
 /* Exports                                                                    */
 /* -------------------------------------------------------------------------- */
 
-function exportBackground() {
-  if (state.transparent) return 'transparent';
-  const value = getComputedStyle(document.documentElement).getPropertyValue('--preview-bg').trim();
-  return value || (state.theme === 'dark' ? '#090c12' : '#f8fafd');
+function exportBackground(options = {}) {
+  const transparent = options.transparent ?? state.transparent;
+  return transparent ? 'transparent' : '#ffffff';
+}
+
+/**
+ * White-background exports use the light diagram palette so they remain
+ * readable when inserted into documents. Transparent exports keep the palette
+ * that is currently visible in the preview.
+ */
+async function getExportSvg({ transparent = state.transparent } = {}) {
+  if (transparent || state.theme !== 'dark' || !state.lastSvg) {
+    return state.lastSvg;
+  }
+  const language = state.language;
+  const code = state.codes[language];
+  const result =
+    language === 'mermaid'
+      ? await renderMermaid(code, { dark: false })
+      : await renderPlantUml(code, { dark: false });
+  return result.svg;
 }
 
 async function exportSvg(options = {}) {
@@ -891,8 +909,9 @@ async function exportSvg(options = {}) {
     return { ok: false, reason: 'empty' };
   }
   try {
-    const prepared = prepareSvg(state.lastSvg);
     const background = exportBackground();
+    const svg = await getExportSvg();
+    const prepared = prepareSvg(svg);
     const markup = withXmlDeclaration(
       background === 'transparent' ? prepared.markup : addSvgBackground(prepared.markup, background),
     );
@@ -930,12 +949,10 @@ async function exportPng(options = {}) {
     document.body.classList.add('is-exporting');
     const scale = options.scale ?? state.pngScale;
     const transparent = options.transparent ?? state.transparent;
-    const render = await renderPng(state.lastSvg, {
+    const svg = await getExportSvg({ transparent });
+    const render = await renderPng(svg, {
       scale,
-      background: transparent
-        ? 'transparent'
-        : getComputedStyle(document.documentElement).getPropertyValue('--preview-bg').trim() ||
-          (state.theme === 'dark' ? '#090c12' : '#f8fafd'),
+      background: exportBackground({ transparent }),
     });
     if (render.scale + 0.01 < scale && !options.quiet) {
       toast('图表尺寸过大，已自动降低 PNG 分辨率。', 'info', 3200);
@@ -980,12 +997,10 @@ async function copyImage(options = {}) {
     document.body.classList.add('is-exporting');
     const scale = options.scale ?? state.pngScale;
     const transparent = options.transparent ?? state.transparent;
-    const render = await renderPng(state.lastSvg, {
+    const svg = await getExportSvg({ transparent });
+    const render = await renderPng(svg, {
       scale,
-      background: transparent
-        ? 'transparent'
-        : getComputedStyle(document.documentElement).getPropertyValue('--preview-bg').trim() ||
-          (state.theme === 'dark' ? '#090c12' : '#f8fafd'),
+      background: exportBackground({ transparent }),
     });
     if (bridge) {
       const result = await bridge.copyImage(render.bytes);
@@ -1275,7 +1290,8 @@ function openPngOptionsMenu(anchor) {
   note.style.fontWeight = '400';
   note.style.fontSize = '9.5px';
   note.style.lineHeight = '1.5';
-  note.textContent = '倍率用于 PNG 与复制图片；透明背景同时作用于 PNG 和 SVG。';
+  note.textContent =
+    '默认导出为纯白背景，深色主题下会自动使用浅色图表配色；透明背景同时作用于 PNG 和 SVG。';
   menu.appendChild(note);
 
   showPopover(menu, anchor);

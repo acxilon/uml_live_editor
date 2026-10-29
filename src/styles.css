@@ -63,7 +63,6 @@ html[data-theme="dark"] {
   --popover-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.02) inset;
   --toast-shadow: 0 16px 40px rgba(0, 0, 0, 0.42);
   --scroll-thumb: rgba(148, 163, 184, 0.22);
-  --diagram-shadow: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.32));
   --accent: #8fa3ff;
   --accent-strong: #b3c0ff;
   --accent-soft: rgba(143, 163, 255, 0.12);
@@ -104,7 +103,6 @@ html[data-theme="light"] {
   --popover-shadow: 0 24px 60px rgba(20, 35, 65, 0.18), 0 1px 2px rgba(20, 35, 65, 0.06);
   --toast-shadow: 0 18px 45px rgba(20, 35, 65, 0.16);
   --scroll-thumb: rgba(71, 85, 105, 0.22);
-  --diagram-shadow: drop-shadow(0 16px 30px rgba(30, 45, 80, 0.12));
   --accent: #4f46e5;
   --accent-strong: #4338ca;
   --accent-soft: rgba(79, 70, 229, 0.08);
@@ -1101,7 +1099,6 @@ html[data-theme="light"] .preview-viewport::after {
 .diagram-svg svg {
   display: block;
   max-width: none !important;
-  filter: var(--diagram-shadow);
 }
 
 .preview-viewport.is-empty .diagram-layer,
@@ -1116,10 +1113,6 @@ html[data-theme="light"] .preview-viewport::after {
 
 .preview-viewport.is-panning {
   cursor: grabbing;
-}
-
-.preview-viewport.is-panning .diagram-svg svg {
-  filter: none;
 }
 
 .preview-placeholder {
